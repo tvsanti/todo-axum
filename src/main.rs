@@ -1,38 +1,16 @@
-use axum::{error_handling::HandleErrorLayer, http::StatusCode, routing::{delete, get, patch, post}, BoxError, Router};
-use tokio::{sync::{broadcast::error, RwLock}, time::Timeout};
-use tower::ServiceBuilder;
+use axum::{routing::get, Router};
 
 
-fn main() {
-    let db = Db::default();
-    let app = Router::new()
-    .route("/create", get(createCRUD))
-    .route("/read", post(readCRUD))
-    .route("/delete/:id", delete(deleteCRUD))
-    .route("/update/:id", patch(updateCRUD))
-    .layer(
-        ServiceBuilder::new()
-            .layer(HandleErrorLayer::new(|error: BoxError| async move {
-                if error.is::<tower::timeout::error::Elapsed>() {                    
-                    Ok(StatusCode::REQUEST_TIMEOUT)
-                } else {
-                    Err((
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        format!("Unhandled internal error: {error}"),
-                    ))
-                }
-            }))
-            .timeout(Duration::from_secs(10))
-            .layer(TraceLayer::new_for_http())
-            .into_inner(),
-        );
+#[tokio::main]
+async fn main() {
+    let app = Router::new().route("/", get(index));
+    let address = tokio::net::TcpListener::bind("127.0.0.1:3000")
+        .await
+        .unwrap();
+    axum::serve(address, app).await.unwrap();
 
-    
 }
 
-
-
-fn createCRUD() {}
-fn readCRUD() {}
-fn deleteCRUD() {}
-fn updateCRUD() {}
+async fn index() -> String {
+    format!("Hello, world")
+}
