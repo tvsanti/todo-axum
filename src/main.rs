@@ -1,7 +1,8 @@
-use axum::{routing::get, Router};
+use axum::{extract::State, http::Result, routing::get, Json, Router};
 use sqlx::postgres::{PgPoolOptions, PgPool};
 use std::time::Duration;
 use tower_http::cors::CorsLayer;
+use serde::{Deserialize, Serialize}
 #[tokio::main]
 async fn main(){
     let _ = dotenv::dotenv();
@@ -19,7 +20,7 @@ async fn main(){
     let app = Router::new()
         .route(
             "/",
-            get(index)
+            get(list)
         )
         .with_state(pool)
         .layer(CorsLayer::very_permissive());
@@ -28,9 +29,19 @@ async fn main(){
         .unwrap();
     axum::serve(address, app).await.unwrap();
 
-
 }
 
-async fn index() -> String {
-    format!("Hello, world")
+#[derive(Deserialize, Serialize)]
+struct Todo {
+    id: i64,
+    description: String,
+    isDone: bool,
+}
+
+async fn list(State(pool): State<PgPool>) -> Result<Json<Todo>> {
+    let todos = sql
+    x::query_as!(Todo, "SELECT id, description, isDone FROM todos ORDER BY id")
+        .fetch_all(&pool)
+        .await?;
+    Ok(Json(todos))
 }
