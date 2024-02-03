@@ -1,10 +1,10 @@
-use axum::{extract::State, http::Result, routing::get, Json, Router};
-use sqlx::postgres::{PgPoolOptions, PgPool};
+use axum::{extract::State, routing::get, Json, Router};
+use serde::{Deserialize, Serialize};
+use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::time::Duration;
 use tower_http::cors::CorsLayer;
-use serde::{Deserialize, Serialize}
 #[tokio::main]
-async fn main(){
+async fn main() {
     let _ = dotenv::dotenv();
     let url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://postgres:password@localhost".to_string());
@@ -16,32 +16,26 @@ async fn main(){
         .await
         .expect("Can not connect to database");
 
-
     let app = Router::new()
-        .route(
-            "/",
-            get(list)
-        )
+        .route("/", get(list))
         .with_state(pool)
         .layer(CorsLayer::very_permissive());
-    let address = tokio::net::TcpListener::bind("127.0.0.1:3000")
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
         .unwrap();
-    axum::serve(address, app).await.unwrap();
-
-}
+    axum::serve(listener, app).await.unwrap();}
 
 #[derive(Deserialize, Serialize)]
 struct Todo {
     id: i64,
     description: String,
-    isDone: bool,
+    done: bool,
 }
 
-async fn list(State(pool): State<PgPool>) -> Result<Json<Todo>> {
-    let todos = sql
-    x::query_as!(Todo, "SELECT id, description, isDone FROM todos ORDER BY id")
+async fn list(State(pool): State<PgPool>) -> Json<Vec<Todo>> {
+    let todos = sqlx::query_as!(Todo, "SELECT * FROM todos;")
         .fetch_all(&pool)
-        .await?;
-    Ok(Json(todos))
+        .await.unwrap();
+    Json(todos)
 }
