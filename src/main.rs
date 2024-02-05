@@ -1,4 +1,8 @@
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{
+    extract::State,
+    routing::{get, post},
+    Form, Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::time::Duration;
@@ -15,27 +19,39 @@ async fn main() {
         .connect(&url)
         .await
         .expect("Can not connect to database");
-
     let app = Router::new()
         .route("/", get(list))
+        .route("/create", post(create))
         .with_state(pool)
         .layer(CorsLayer::very_permissive());
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
         .unwrap();
-    axum::serve(listener, app).await.unwrap();}
-
-#[derive(Deserialize, Serialize)]
-struct Todo {
-    id: i64,
-    description: String,
-    done: bool,
+    axum::serve(listener, app).await.unwrap();
 }
 
-async fn list(State(pool): State<PgPool>) -> Json<Vec<Todo>> {
-    let todos = sqlx::query_as!(Todo, "SELECT * FROM todos;")
-        .fetch_all(&pool)
-        .await.unwrap();
+#[derive(Serialize,Deserialize, Debug)]
+pub struct NewTodo {
+    pub id: i32,
+    pub description: String,
+    pub done: bool,
+}
+async fn list(State(pool): State<PgPool>) -> Json<Vec<NewTodo>>{
+    let todos = sqlx::query_as!(NewTodo, "SELECT * FROM todos").fetch_all(&pool).await.unwrap();
     Json(todos)
+}
+
+
+async fn create(State(pool): State<PgPool>, Form(todo): Form<NewTodo>) {
+    let result = sqlx::query!(
+        "INSERT INTO todos (id, description, done) VALUES ($1, $2, $3) RETURNING Id",
+        todo.id,
+        todo.description,
+        todo.done
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    dbg!("result:", result);
 }
