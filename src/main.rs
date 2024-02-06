@@ -1,6 +1,6 @@
 use axum::{
-    extract::State,
-    routing::{get, post},
+    extract::{Path, State},
+    routing::{delete, get, post},
     Form, Json, Router,
 };
 use serde::{Deserialize, Serialize};
@@ -22,6 +22,7 @@ async fn main() {
     let app = Router::new()
         .route("/", get(list))
         .route("/create", post(create))
+        .route("/delete/:id", delete(delete_crud))
         .with_state(pool)
         .layer(CorsLayer::very_permissive());
 
@@ -54,4 +55,14 @@ async fn create(State(pool): State<PgPool>, Form(todo): Form<NewTodo>) {
     .await
     .unwrap();
     dbg!("result:", result);
+}
+
+async fn delete_crud(State(pool): State<PgPool>, Path(id): Path<i32>) {
+    let result = sqlx::query!(
+        "DELETE FROM todos WHERE id = ($1)",
+        id,
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
 }
