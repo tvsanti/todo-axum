@@ -1,6 +1,6 @@
 -- Add migration script here
 CREATE TABLE IF NOT EXISTS todos (
-    id INTEGER PRIMARY KEY NOT NULL,
+    id SERIAL PRIMARY KEY,
     description TEXT NOT NULL,
     done BOOLEAN NOT NULL DEFAULT false
 );
