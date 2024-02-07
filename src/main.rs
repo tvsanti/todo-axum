@@ -1,7 +1,7 @@
 mod error;
 
 use axum::{
-    extract::{Path, State}, http::StatusCode, response::IntoResponse, routing::{delete, get, post}, Form, Json, Router
+    extract::{Path, State}, http::StatusCode, response::IntoResponse, routing::{delete, get, post, put}, Form, Json, Router
 };
 use error::CustomError;
 use serde::{Deserialize, Serialize};
@@ -24,6 +24,7 @@ async fn main() {
         .route("/", get(list))
         .route("/create", post(create))
         .route("/delete/:id", delete(delete_crud))
+        .route("/update", put(update_crud))
         .with_state(pool)
         .layer(CorsLayer::very_permissive());
 
@@ -60,9 +61,22 @@ async fn create(State(pool): State<PgPool>, Form(todo): Form<NewTodo>) -> Result
 }
 
 async fn delete_crud(State(pool): State<PgPool>, Path(id): Path<i32>) -> Result<impl IntoResponse, CustomError >{
-    let result = sqlx::query!(
+    sqlx::query!(
         "DELETE FROM todos WHERE id = ($1)",
         id,
+    )
+    .fetch_one(&pool)
+    .await?;
+
+    Ok((StatusCode::OK).into_response())
+}
+
+
+async fn update_crud(State(pool): State<PgPool>, Form(todo): Form<NewTodo>) -> Result<impl IntoResponse, CustomError >{
+    sqlx::query!(
+        "UPDATE todos SET description = ($1) WHERE id = ($2)",
+        todo.description,
+        todo.id
     )
     .fetch_one(&pool)
     .await?;
