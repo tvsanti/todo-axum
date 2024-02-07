@@ -1,8 +1,9 @@
+mod error;
+
 use axum::{
-    extract::{Path, State},
-    routing::{delete, get, post},
-    Form, Json, Router,
+    extract::{Path, State}, http::StatusCode, response::IntoResponse, routing::{delete, get, post}, Form, Json, Router
 };
+use error::CustomError;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::time::Duration;
@@ -11,7 +12,7 @@ use tower_http::cors::CorsLayer;
 async fn main() {
     let _ = dotenv::dotenv();
     let url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://postgres:password@localhost".to_string());
+        .unwrap_or_else(|_| "postgres://postgres:postgres@localhost".to_string());
 
     let pool = PgPoolOptions::new()
         .max_connections(5)
@@ -44,7 +45,7 @@ async fn list(State(pool): State<PgPool>) -> Json<Vec<NewTodo>>{
 }
 
 
-async fn create(State(pool): State<PgPool>, Form(todo): Form<NewTodo>) {
+async fn create(State(pool): State<PgPool>, Form(todo): Form<NewTodo>) -> Result<impl IntoResponse, CustomError> {
     let result = sqlx::query!(
         "INSERT INTO todos (id, description, done) VALUES ($1, $2, $3) RETURNING Id",
         todo.id,
@@ -52,17 +53,19 @@ async fn create(State(pool): State<PgPool>, Form(todo): Form<NewTodo>) {
         todo.done
     )
     .fetch_one(&pool)
-    .await
-    .unwrap();
+    .await?;
     dbg!("result:", result);
+
+    Ok((StatusCode::OK).into_response())
 }
 
-async fn delete_crud(State(pool): State<PgPool>, Path(id): Path<i32>) {
+async fn delete_crud(State(pool): State<PgPool>, Path(id): Path<i32>) -> Result<impl IntoResponse, CustomError >{
     let result = sqlx::query!(
         "DELETE FROM todos WHERE id = ($1)",
         id,
     )
     .fetch_one(&pool)
-    .await
-    .unwrap();
+    .await?;
+
+    Ok((StatusCode::OK).into_response())
 }
