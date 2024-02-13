@@ -3,6 +3,10 @@ mod models;
 #[path="./routes/routes.rs"]
 mod routes;
 
+#[path="./routes/authentication.rs"]
+mod authentication;
+
+
 use axum::{
     routing::{delete, get, post, put}, Router,
 };
@@ -25,6 +29,8 @@ async fn main() {
     let app = Router::new()
         .route("/", get(routes::list))
         .route("/create", post(routes::create))
+        .route("/login", post(authentication::login_handler))
+        .route("/register", post(authentication::register_handler))
         .route("/delete/:id", delete(routes::delete_crud))
         .route("/update", put(routes::update_crud))
         .with_state(pool)
