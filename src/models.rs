@@ -23,12 +23,12 @@ pub struct User {
     pub created_at: Option<OffsetDateTime>,
     pub updated_at: Option<OffsetDateTime>,
 }
-
+#[derive(Deserialize, Debug)]
 pub struct Login {
     pub username: String,
     pub password: String,
 }
-
+#[derive(Deserialize, Debug)]
 pub struct Register {
     pub username: String,
     pub email: String,

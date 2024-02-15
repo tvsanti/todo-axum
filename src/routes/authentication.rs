@@ -1,8 +1,8 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Form};
 use sqlx::PgPool;
-
 use crate::{error::CustomError, models::{Login, Register, User}};
 
+#[axum_macros::debug_handler]
 pub async fn register_handler(    
     State(pool): State<PgPool>,
     Form(register): Form<Register>,
@@ -19,7 +19,7 @@ pub async fn register_handler(
     Ok((StatusCode::OK).into_response())
 }
 
-
+#[axum_macros::debug_handler]
 pub async fn login_handler(
     State(pool): State<PgPool>,
     Form(login): Form<Login>,
