@@ -8,7 +8,7 @@ use axum::{
     response::IntoResponse,
     Form,
 };
-use cookie::Cookie;
+use cookie::{Cookie, CookieJar};
 use jwt_simple::prelude::*;
 use jwt_simple::reexports::serde_json;
 use sqlx::PgPool;
@@ -50,6 +50,12 @@ pub async fn login_handler(
         let key = HS256Key::generate();
         let claims = Claims::create(Duration::from_hours(2));
         let token = key.authenticate(claims)?;
+
+        let mut jar = CookieJar::new();
+        
+        println!("123123");
+        println!("{:?}",jar.add_original(("Token", token.clone())));
+
         let cookie = Cookie::new("Token", token);
 
         Ok(Response::builder()
@@ -68,4 +74,3 @@ pub async fn login_handler(
     }
 }
 
-// let claims = key.verify_token::<NoCustomClaims>(&token, None)?;

@@ -4,6 +4,7 @@ use axum::{
     response::IntoResponse,
     Form, Json,
 };
+use cookie::CookieJar;
 use sqlx::PgPool;
 
 use crate::{
@@ -11,11 +12,20 @@ use crate::{
     models::{NewTodo, Todo},
 };
 
+#[axum_macros::debug_handler]
 pub async fn list(State(pool): State<PgPool>) -> Json<Vec<Todo>> {
+    let jar = CookieJar::new();
+    println!("Estamos dentro");
+    println!("{:?}",jar);
+    if let Some(token) = jar.get("Token") {
+
+        println!("Token: {}", token.value());
+    }
     let todos = sqlx::query_as!(Todo, "SELECT * FROM todos")
         .fetch_all(&pool)
         .await
         .unwrap();
+    
     Json(todos)
 }
 
