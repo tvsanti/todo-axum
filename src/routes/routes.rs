@@ -15,8 +15,6 @@ use crate::{
 #[axum_macros::debug_handler]
 pub async fn list(State(pool): State<PgPool>) -> Json<Vec<Todo>> {
     let jar = CookieJar::new();
-    println!("Estamos dentro");
-    println!("{:?}",jar);
     if let Some(token) = jar.get("Token") {
 
         println!("Token: {}", token.value());
