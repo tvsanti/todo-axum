@@ -8,9 +8,7 @@ use axum::{
     response::IntoResponse,
     Form,
 };
-use cookie::{Cookie, CookieJar};
-use jwt_simple::prelude::*;
-use jwt_simple::reexports::serde_json;
+use cookie::Cookie;
 use sqlx::PgPool;
 
 #[axum_macros::debug_handler]
@@ -48,13 +46,8 @@ pub async fn login_handler(
         let user_json = serde_json::to_string(&user)?;
 
         let key = HS256Key::generate();
-        let claims = Claims::create(Duration::from_hours(2));
+        let claims = Claims::create(Duration::from_hours(24));
         let token = key.authenticate(claims)?;
-
-        let mut jar = CookieJar::new();
-        
-        println!("123123");
-        println!("{:?}",jar.add_original(("Token", token.clone())));
 
         let cookie = Cookie::new("Token", token);
 
