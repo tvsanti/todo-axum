@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use sqlx::prelude::FromRow;
 use time::OffsetDateTime;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -14,7 +15,7 @@ pub struct NewTodo {
     pub done: bool,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, FromRow)]
 pub struct User {
     pub id: i32,
     pub username: String,
@@ -37,9 +38,8 @@ pub struct Register {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct TokenClaims {
+pub struct Claims {
     pub sub: String,
-    pub iat: usize,
-    pub exp: usize,
+    pub company: String,
+    pub exp: u64,
 }
-
