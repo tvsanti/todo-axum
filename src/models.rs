@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use sqlx::prelude::FromRow;
+use sqlx::{prelude::FromRow, Pool, Postgres};
 use time::OffsetDateTime;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -42,4 +42,11 @@ pub struct Claims {
     pub sub: String,
     pub company: String,
     pub exp: u64,
+}
+
+#[derive(Clone)]
+pub struct ServerState {
+    pub pool: Pool<Postgres>,
+    pub public_key: [u8; 13],
+    // Otros campos relevantes si los tienes
 }
